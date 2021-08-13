@@ -1,0 +1,36 @@
+version: '3'
+services:
+  webdav:
+    image: 'bytemark/webdav'
+    restart: always
+    expose:
+      - 80
+    environment:
+      AUTH_TYPE: Basic
+      USERNAME: alice
+      PASSWORD: secret1234
+    volumes:
+      - ./dav:/var/lib/dav
+
+  reverse-proxy:
+    image: nginx
+    depends_on:
+      - certs
+      - webdav
+    volumes:
+      - ./reverse-proxy/nginx.conf:/etc/nginx/nginx.conf
+      - ./certs:/certs/
+    ports:
+      - 7443:443
+
+  certs:
+    image: paulczar/omgwtfssl
+    restart: 'no'
+    environment:
+      - CA_SUBJECT=Leo Sugiyama # CN of CA (Certification Authority)
+      - CA_EXPIRE=3650
+      - SSL_SUBJECT=localhost   # CN (Common Name)
+      - SSL_DNS=localhost       # SAN (Subject Alternative Name)
+      - SSL_EXPIRE=3650
+    volumes:
+      - ./certs:/certs
